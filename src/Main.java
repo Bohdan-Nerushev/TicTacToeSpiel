@@ -12,10 +12,12 @@ public class Main {
 
     static int boardSize = 3; // Größe des Spielfelds NxN / Board size NxN / Розмір поля NxN
     static char[] board;
+    static char[] rowWon = new char[3];
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
+        // Spielschleife starten / Start game loop / Запуск циклу гри
         while (true) {
             System.out.println("Do you want to play? (yes / no): ");
             String answer = sc.nextLine();
@@ -23,7 +25,6 @@ public class Main {
             if (answer.equalsIgnoreCase("yes")) {
                 int numberOfFields = fieldSizeGiver(sc); // Spielfeldgröße bestimmen / Get field size / Визначити розмір поля
                 System.out.println(startGame(sc, numberOfFields)); // Spiel starten / Start game / Розпочати гру
-
             } else if (answer.equalsIgnoreCase("no")) {
                 sc.close();
                 break; // Beenden / Exit / Вийти
@@ -57,16 +58,52 @@ public class Main {
         }
     }
 
-    // Spielfeld initialisieren
-    // Initialize board
-    // Ініціалізація поля
+    // Spiel starten / Start game / Розпочати гру
+    public static String startGame(Scanner sc, int n) {
+        initBoard(n); // Spielfeld initialisieren / Initialize board / Ініціалізація поля
+
+        int boardLength = board.length;
+        int moves = 0;
+        PLAYER currentPlayer = PLAYER.X;
+
+        RowWon rowChecker = new RowWon(); // Objekt für 3er-Reihenprüfung / Object to check 3-row wins / Об'єкт для перевірки 3-в-ряд
+
+        while (true) {
+            printBoard(n); // Spielfeld anzeigen / Print board / Вивід дошки
+            System.out.println("Player " + currentPlayer + " is on turn.");
+            makeMove(currentPlayer, sc); // Spielerzug machen / Make a move / Зробити хід
+            System.out.println();
+            moves++;
+
+            // ---- Verwendung von RowWon für 3er-Reihen ----
+            char lastMove = (currentPlayer == PLAYER.X) ? 'X' : 'O';
+            char rowResult = rowChecker.charCheckWin(lastMove);
+
+            if (rowResult == 'X' || rowResult == 'O') {
+                return "Player " + rowResult + " won the 3-row game!";
+            }
+
+            // ---- Überprüfung auf vollständigen Gewinn auf dem Brett ----
+            char result = checkWin(n); // Gewinner prüfen / Check winner / Перевірка переможця
+            if (result == 'X' || result == 'O') {
+                return "Player " + result + " won the full board!";
+            }
+
+            if (moves == boardLength) {
+                return "Draw!"; // Unentschieden / Draw / Нічия
+            }
+
+            // Spieler wechseln / Switch player / Змінити гравця
+            currentPlayer = (currentPlayer == PLAYER.X) ? PLAYER.O : PLAYER.X;
+        }
+    }
+
+    // Spielfeld initialisieren / Initialize board / Ініціалізація поля
     public static void initBoard(int n) {
         for (int i = 0; i < n * n; i++) board[i] = '-'; // Mit '-' füllen / Fill with '-' / Заповнити дефісами
     }
 
-    // Spielfeld ausgeben
-    // Print board
-    // Вивід дошки
+    // Spielfeld ausgeben / Print board / Вивід дошки
     public static void printBoard(int n) {
         System.out.println("_____".repeat(n));
         int r = 0; // Zähler für Zellen / Cell counter / Лічильник клітинок
@@ -82,9 +119,7 @@ public class Main {
         }
     }
 
-    // Einen Spielzug machen
-    // Make a move
-    // Зробити хід
+    // Einen Spielzug machen / Make a move / Зробити хід
     public static void makeMove(PLAYER player, Scanner sc) {
         int boardLength = board.length - 1;
         while (true) {
@@ -109,9 +144,7 @@ public class Main {
         }
     }
 
-    // Gewinner prüfen
-    // Check winner
-    // Перевірка переможця
+    // Gewinner prüfen / Check winner / Перевірка переможця
     public static char checkWin(int n) {
         char[] players = {'X', 'O'};
 
@@ -164,35 +197,7 @@ public class Main {
 
         return '-'; // Kein Gewinner / No winner / Переможця немає
     }
-
-    // Spiel starten / Start game / Розпочати гру
-    public static String startGame(Scanner sc, int n) {
-        initBoard(n);
-
-        int boardLength = board.length;
-        int moves = 0;
-        PLAYER currentPlayer = PLAYER.X;
-
-        while (true) {
-            printBoard(n);
-            System.out.println("Player " + currentPlayer + " is on turn."); // Spieler am Zug / Player on turn / Гравець на ході
-            makeMove(currentPlayer, sc);
-            System.out.println();
-            moves++;
-
-            char result = checkWin(n);
-            if (result == 'X' || result == 'O') {
-                return "Player " + result + " won!"; // Spieler hat gewonnen / Player won / Гравець виграв
-            }
-
-            if (moves == boardLength) {
-                return "Draw!"; // Unentschieden / Draw / Нічия
-            }
-
-            // Spieler wechseln / Switch player / Змінити гравця
-            currentPlayer = (currentPlayer == PLAYER.X) ? PLAYER.O : PLAYER.X;
-        }
-    }
 }
+
 
 
