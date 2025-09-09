@@ -17,7 +17,10 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        System.out.println();
 
+        System.out.println();
+        System.out.println();
         while (true) {
             System.out.println("Do you want to play? (yes / no) (ja / nein): ");
             String answer = sc.nextLine();
@@ -57,6 +60,7 @@ public class Main {
 
     // Hauptspielschleife
     public static String startGame(Scanner sc, int n) {
+        System.out.println();
         RowWon rowChecker = new RowWon(); // EIN Objekt für die ganze Spielsession
 
         while (true) {
