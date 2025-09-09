@@ -1,42 +1,40 @@
+
+
+
+
 import java.util.Scanner;
 
 public class Main {
 
     // Enum für Spieler
-    // Enum for players
-    // Перерахування для гравців
     enum PLAYER {
         X,
         O
     }
 
-    static int boardSize = 3; // Größe des Spielfelds NxN / Board size NxN / Розмір поля NxN
+    static int boardSize = 3;
     static char[] board;
-    static char[] rowWon = new char[3];
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        // Spielschleife starten / Start game loop / Запуск циклу гри
         while (true) {
-            System.out.println("Do you want to play? (yes / no): ");
+            System.out.println("Do you want to play? (yes / no) (ja / nein): ");
             String answer = sc.nextLine();
 
-            if (answer.equalsIgnoreCase("yes")) {
-                int numberOfFields = fieldSizeGiver(sc); // Spielfeldgröße bestimmen / Get field size / Визначити розмір поля
-                System.out.println(startGame(sc, numberOfFields)); // Spiel starten / Start game / Розпочати гру
-            } else if (answer.equalsIgnoreCase("no")) {
+            if (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("ja") ) {
+                int numberOfFields = fieldSizeGiver(sc);
+                System.out.println(startGame(sc, numberOfFields));
+            } else if (answer.equalsIgnoreCase("no") || answer.equalsIgnoreCase("nein")) {
                 sc.close();
-                break; // Beenden / Exit / Вийти
+                break;
             } else {
-                System.out.println("Command not found. Please enter 'yes' or 'no'.");
+                System.out.println("Command not found. Please enter ('yes' or 'no') (ja / nein) .");
             }
         }
     }
 
-    // Methode um die Feldgröße zu bekommen
-    // Method to get field size
-    // Метод для отримання розміру поля
+    // Feldgröße bestimmen
     public static int fieldSizeGiver(Scanner sc){
         while (true) {
             try {
@@ -49,8 +47,7 @@ public class Main {
                 }
 
                 boardSize = fieldSize;
-                board = new char[boardSize * boardSize]; // Array für das Spielfeld erstellen / Create array / Створити масив для поля
-
+                board = new char[boardSize * boardSize];
                 return fieldSize;
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input! Please enter a number between 3 and 9.");
@@ -58,68 +55,70 @@ public class Main {
         }
     }
 
-    // Spiel starten / Start game / Розпочати гру
+    // Hauptspielschleife
     public static String startGame(Scanner sc, int n) {
-        initBoard(n); // Spielfeld initialisieren / Initialize board / Ініціалізація поля
-
-        int boardLength = board.length;
-        int moves = 0;
-        PLAYER currentPlayer = PLAYER.X;
-
-        RowWon rowChecker = new RowWon(); // Objekt für 3er-Reihenprüfung / Object to check 3-row wins / Об'єкт для перевірки 3-в-ряд
+        RowWon rowChecker = new RowWon(); // EIN Objekt für die ganze Spielsession
 
         while (true) {
-            printBoard(n); // Spielfeld anzeigen / Print board / Вивід дошки
-            System.out.println("Player " + currentPlayer + " is on turn.");
-            makeMove(currentPlayer, sc); // Spielerzug machen / Make a move / Зробити хід
-            System.out.println();
-            moves++;
+            initBoard(n);
+            int boardLength = board.length;
+            int moves = 0;
+            PLAYER currentPlayer = PLAYER.X;
 
-            // ---- Verwendung von RowWon für 3er-Reihen ----
-            char lastMove = (currentPlayer == PLAYER.X) ? 'X' : 'O';
-            char rowResult = rowChecker.charCheckWin(lastMove);
+            while (true) {
+                printBoard(n);
+                System.out.println("Player " + currentPlayer + " is on turn.");
+                makeMove(currentPlayer, sc);
+                System.out.println();
+                moves++;
 
-            if (rowResult == 'X' || rowResult == 'O') {
-                return "Player " + rowResult + " won the 3-row game!";
+                char result = checkWin(n);
+                if (result == 'X' || result == 'O') {
+                    rowChecker.addWin(result);
+
+                    if (rowChecker.hasTripleWin(result)) {
+                        printBoard(n);
+                        return "Player " + result + " won the game with 3 wins!";
+                    } else {
+                        System.out.println("Player " + result + " won this round! "
+                                + "Score: X=" + rowChecker.getWins('X')
+                                + " O=" + rowChecker.getWins('O'));
+                        break; // neuer Rundstart
+                    }
+                }
+
+                if (moves == boardLength) {
+                    System.out.println("Draw! Starting new round.");
+                    break; // neuer Rundstart, kein Gewinner
+                }
+
+                currentPlayer = (currentPlayer == PLAYER.X) ? PLAYER.O : PLAYER.X;
             }
-
-            // ---- Überprüfung auf vollständigen Gewinn auf dem Brett ----
-            char result = checkWin(n); // Gewinner prüfen / Check winner / Перевірка переможця
-            if (result == 'X' || result == 'O') {
-                return "Player " + result + " won the full board!";
-            }
-
-            if (moves == boardLength) {
-                return "Draw!"; // Unentschieden / Draw / Нічия
-            }
-
-            // Spieler wechseln / Switch player / Змінити гравця
-            currentPlayer = (currentPlayer == PLAYER.X) ? PLAYER.O : PLAYER.X;
         }
     }
 
-    // Spielfeld initialisieren / Initialize board / Ініціалізація поля
+    // Board initialisieren
     public static void initBoard(int n) {
-        for (int i = 0; i < n * n; i++) board[i] = '-'; // Mit '-' füllen / Fill with '-' / Заповнити дефісами
+        for (int i = 0; i < n * n; i++) board[i] = '-';
     }
 
-    // Spielfeld ausgeben / Print board / Вивід дошки
+    // Board ausgeben
     public static void printBoard(int n) {
-        System.out.println("_____".repeat(n));
-        int r = 0; // Zähler für Zellen / Cell counter / Лічильник клітинок
+        System.out.println("______".repeat(n));
+        int r = 0;
         for (int row = 0; row < n; row++) {
             System.out.print("|");
             for (int col = 0; col < n; col++) {
                 int index = row * n + col;
-                System.out.print(r + "| " + board[index] + "|");
+                System.out.print(r + "| " + board[index] + " |");
                 r++;
             }
             System.out.println();
-            System.out.println("_____".repeat(n));
+            System.out.println("______".repeat(n));
         }
     }
 
-    // Einen Spielzug machen / Make a move / Зробити хід
+    // Spielerzug machen
     public static void makeMove(PLAYER player, Scanner sc) {
         int boardLength = board.length - 1;
         while (true) {
@@ -144,13 +143,12 @@ public class Main {
         }
     }
 
-    // Gewinner prüfen / Check winner / Перевірка переможця
+    // Gewinner prüfen
     public static char checkWin(int n) {
         char[] players = {'X', 'O'};
 
         for (char player : players) {
-
-            // Reihen prüfen / Check rows / Перевірка рядків
+            // Reihen
             for (int row = 0; row < n; row++) {
                 boolean win = true;
                 for (int col = 0; col < n; col++) {
@@ -162,7 +160,7 @@ public class Main {
                 if (win) return player;
             }
 
-            // Spalten prüfen / Check columns / Перевірка колонок
+            // Spalten
             for (int col = 0; col < n; col++) {
                 boolean win = true;
                 for (int row = 0; row < n; row++) {
@@ -174,7 +172,7 @@ public class Main {
                 if (win) return player;
             }
 
-            // Hauptdiagonale prüfen / Check main diagonal / Перевірка головної діагоналі
+            // Hauptdiagonale
             boolean winDiag1 = true;
             for (int i = 0; i < n; i++) {
                 if (board[i * n + i] != player) {
@@ -184,7 +182,7 @@ public class Main {
             }
             if (winDiag1) return player;
 
-            // Nebendiagonale prüfen / Check secondary diagonal / Перевірка побічної діагоналі
+            // Nebendiagonale
             boolean winDiag2 = true;
             for (int i = 0; i < n; i++) {
                 if (board[i * n + (n - 1 - i)] != player) {
@@ -195,9 +193,6 @@ public class Main {
             if (winDiag2) return player;
         }
 
-        return '-'; // Kein Gewinner / No winner / Переможця немає
+        return '-';
     }
 }
-
-
-
